@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Study Sprint Planner</title>
+  <style>
+    :root {
+      --ink: #0f1c17;
+      --ink-soft: #1a2e26;
+      --mist: #d8ebe1;
+      --paper: #eef6f1;
+      --muted: #6d8579;
+      --study: #2f8f6b;
+      --study-deep: #1f6b4f;
+      --break: #c47a2c;
+      --break-soft: #f3ddc0;
+      --danger: #b33a2b;
+      --line: rgba(15, 28, 23, 0.12);
+      --shadow: 0 24px 60px rgba(8, 18, 14, 0.28);
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      --body: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      --mono: "SF Mono", "Menlo", "Consolas", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: var(--body);
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 55% at 12% -10%, rgba(47, 143, 107, 0.28), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 92% 8%, rgba(196, 122, 44, 0.22), transparent 50%),
+        linear-gradient(165deg, #143028 0%, var(--ink) 42%, #16261f 100%);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem 1.25rem 3rem;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.08;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 20%, transparent 75%);
+    }
+
+    .shell {
+      width: min(720px, 100%);
+      position: relative;
+      animation: rise 0.7s ease-out both;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes tick {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    header {
+      margin-bottom: 1.5rem;
+      color: var(--paper);
+    }
+
+    .brand {
+      font-family: var(--display);
+      font-size: clamp(2.8rem, 9vw, 4.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.75rem;
+      font-weight: 700;
+    }
+
+    .brand span {
+      display: inline-block;
+      color: #9fd9bb;
+      animation: fade-in 0.8s 0.15s ease both;
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 34ch;
+      font-size: 1.05rem;
+      line-height: 1.45;
+      color: rgba(238, 246, 241, 0.78);
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(238, 246, 241, 0.98), rgba(216, 235, 225, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: var(--shadow);
+      padding: clamp(1.25rem, 3vw, 2rem);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 4px;
+      width: 100%;
+      background: linear-gradient(90deg, var(--study), #7bc49f 45%, var(--break));
+      transform-origin: left;
+      animation: tick 0.9s 0.2s ease both;
+    }
+
+    form {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    input {
+      font: inherit;
+      font-size: 1.15rem;
+      font-variant-numeric: tabular-nums;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--study);
+      box-shadow: 0 0 0 3px rgba(47, 143, 107, 0.18);
+      background: #fff;
+    }
+
+    input.invalid {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(179, 58, 43, 0.12);
+    }
+
+    .actions {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    button {
+      font: inherit;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border: none;
+      cursor: pointer;
+      padding: 0.85rem 1.35rem;
+      transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--study-deep);
+      color: #f4fff9;
+    }
+
+    .btn-primary:hover {
+      background: var(--study);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(15, 28, 23, 0.05);
+    }
+
+    .message {
+      grid-column: 1 / -1;
+      min-height: 1.35rem;
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--danger);
+    }
+
+    .message[hidden] {
+      display: none;
+    }
+
+    .results {
+      margin-top: 1.5rem;
+      animation: fade-in 0.35s ease both;
+    }
+
+    .results[hidden] {
+      display: none;
+    }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      border-top: 1px solid var(--line);
+      padding-top: 1.25rem;
+    }
+
+    .stat {
+      padding: 0.35rem 0;
+    }
+
+    .stat dt {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .stat dd {
+      margin: 0.25rem 0 0;
+      font-family: var(--display);
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timeline {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .block {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.7rem 0.85rem;
+      background: rgba(255, 255, 255, 0.55);
+      border-left: 4px solid var(--study);
+      animation: fade-in 0.4s ease both;
+    }
+
+    .block.break {
+      border-left-color: var(--break);
+      background: rgba(243, 221, 192, 0.45);
+    }
+
+    .block .index {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      min-width: 1.6rem;
+    }
+
+    .block .label {
+      font-weight: 600;
+    }
+
+    .block .mins {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+
+    .remainder {
+      margin: 1rem 0 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      form,
+      .totals {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1 class="brand">Study <span>Sprint</span></h1>
+      <p class="lede">Plan focus blocks and breaks that fit your available minutes—offline, in one page.</p>
+    </header>
+
+    <main class="panel">
+      <form id="planner-form" novalidate>
+        <div class="field">
+          <label for="total">Total minutes</label>
+          <input id="total" name="total" type="number" inputmode="numeric" min="1" step="1" placeholder="90" required />
+        </div>
+        <div class="field">
+          <label for="study">Study interval</label>
+          <input id="study" name="study" type="number" inputmode="numeric" min="1" step="1" placeholder="25" required />
+        </div>
+        <div class="field">
+          <label for="break">Break length</label>
+          <input id="break" name="break" type="number" inputmode="numeric" min="0" step="1" placeholder="5" required />
+        </div>
+
+        <p class="message" id="error" hidden role="alert"></p>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">Build plan</button>
+          <button type="button" class="btn-ghost" id="reset">Reset</button>
+        </div>
+      </form>
+
+      <section class="results" id="results" hidden aria-live="polite">
+        <dl class="totals">
+          <div class="stat">
+            <dt>Study blocks</dt>
+            <dd id="study-count">0</dd>
+          </div>
+          <div class="stat">
+            <dt>Study time</dt>
+            <dd id="study-total">0m</dd>
+          </div>
+          <div class="stat">
+            <dt>Break time</dt>
+            <dd id="break-total">0m</dd>
+          </div>
+        </dl>
+        <ol class="timeline" id="timeline"></ol>
+        <p class="remainder" id="remainder" hidden></p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById("planner-form");
+      const totalInput = document.getElementById("total");
+      const studyInput = document.getElementById("study");
+      const breakInput = document.getElementById("break");
+      const errorEl = document.getElementById("error");
+      const results = document.getElementById("results");
+      const timeline = document.getElementById("timeline");
+      const studyCountEl = document.getElementById("study-count");
+      const studyTotalEl = document.getElementById("study-total");
+      const breakTotalEl = document.getElementById("break-total");
+      const remainderEl = document.getElementById("remainder");
+      const resetBtn = document.getElementById("reset");
+
+      function clearValidation() {
+        [totalInput, studyInput, breakInput].forEach(function (el) {
+          el.classList.remove("invalid");
+        });
+        errorEl.hidden = true;
+        errorEl.textContent = "";
+      }
+
+      function showError(message, fields) {
+        errorEl.hidden = false;
+        errorEl.textContent = message;
+        (fields || []).forEach(function (el) {
+          el.classList.add("invalid");
+        });
+        results.hidden = true;
+      }
+
+      function parseInteger(value) {
+        if (value === "" || value === null || value === undefined) return null;
+        if (!/^-?\d+$/.test(String(value).trim())) return NaN;
+        return Number(String(value).trim());
+      }
+
+      function validate() {
+        clearValidation();
+
+        const total = parseInteger(totalInput.value);
+        const study = parseInteger(studyInput.value);
+        const breakLen = parseInteger(breakInput.value);
+        const invalidFields = [];
+
+        if (total === null || study === null || breakLen === null) {
+          if (total === null) invalidFields.push(totalInput);
+          if (study === null) invalidFields.push(studyInput);
+          if (breakLen === null) invalidFields.push(breakInput);
+          showError("Enter total minutes, study interval, and break length.", invalidFields);
+          return null;
+        }
+
+        if (Number.isNaN(total) || Number.isNaN(study) || Number.isNaN(breakLen)) {
+          if (Number.isNaN(total)) invalidFields.push(totalInput);
+          if (Number.isNaN(study)) invalidFields.push(studyInput);
+          if (Number.isNaN(breakLen)) invalidFields.push(breakInput);
+          showError("Use whole numbers only (no decimals or text).", invalidFields);
+          return null;
+        }
+
+        if (total < 1) {
+          showError("Total minutes must be at least 1.", [totalInput]);
+          return null;
+        }
+
+        if (study < 1) {
+          showError("Study interval must be at least 1 minute.", [studyInput]);
+          return null;
+        }
+
+        if (breakLen < 0) {
+          showError("Break length cannot be negative.", [breakInput]);
+          return null;
+        }
+
+        if (study > total) {
+          showError("Study interval cannot be longer than total minutes.", [studyInput, totalInput]);
+          return null;
+        }
+
+        return { total: total, study: study, breakLen: breakLen };
+      }
+
+      /**
+       * Fit as many full study blocks as possible inside total minutes,
+       * placing a break between study blocks when there is room for both
+       * the break and another study interval after it. No trailing break.
+       */
+      function buildPlan(total, study, breakLen) {
+        var intervals = [];
+        var remaining = total;
+
+        while (remaining >= study) {
+          intervals.push({ type: "study", minutes: study });
+          remaining -= study;
+
+          // Place a break only when another full study block still fits after it.
+          if (breakLen > 0 && remaining >= breakLen + study) {
+            intervals.push({ type: "break", minutes: breakLen });
+            remaining -= breakLen;
+          }
+        }
+
+        return { intervals: intervals, unused: remaining };
+      }
+
+      function renderPlan(plan) {
+        var studyBlocks = 0;
+        var studyMinutes = 0;
+        var breakMinutes = 0;
+
+        timeline.innerHTML = "";
+
+        plan.intervals.forEach(function (item, index) {
+          var li = document.createElement("li");
+          li.className = "block" + (item.type === "break" ? " break" : "");
+          li.style.animationDelay = (index * 0.04) + "s";
+
+          var indexEl = document.createElement("span");
+          indexEl.className = "index";
+          indexEl.textContent = String(index + 1).padStart(2, "0");
+
+          var labelEl = document.createElement("span");
+          labelEl.className = "label";
+          labelEl.textContent = item.type === "study" ? "Study" : "Break";
+
+          var minsEl = document.createElement("span");
+          minsEl.className = "mins";
+          minsEl.textContent = item.minutes + " min";
+
+          li.appendChild(indexEl);
+          li.appendChild(labelEl);
+          li.appendChild(minsEl);
+          timeline.appendChild(li);
+
+          if (item.type === "study") {
+            studyBlocks += 1;
+            studyMinutes += item.minutes;
+          } else {
+            breakMinutes += item.minutes;
+          }
+        });
+
+        studyCountEl.textContent = String(studyBlocks);
+        studyTotalEl.textContent = studyMinutes + "m";
+        breakTotalEl.textContent = breakMinutes + "m";
+
+        if (plan.unused > 0) {
+          remainderEl.hidden = false;
+          remainderEl.textContent =
+            plan.unused +
+            " minute" +
+            (plan.unused === 1 ? "" : "s") +
+            " left unscheduled (not enough for another full study block).";
+        } else {
+          remainderEl.hidden = true;
+          remainderEl.textContent = "";
+        }
+
+        results.hidden = false;
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var values = validate();
+        if (!values) return;
+        var plan = buildPlan(values.total, values.study, values.breakLen);
+        renderPlan(plan);
+      });
+
+      resetBtn.addEventListener("click", function () {
+        form.reset();
+        clearValidation();
+        results.hidden = true;
+        timeline.innerHTML = "";
+        remainderEl.hidden = true;
+        remainderEl.textContent = "";
+        studyCountEl.textContent = "0";
+        studyTotalEl.textContent = "0m";
+        breakTotalEl.textContent = "0m";
+        totalInput.focus();
+      });
+
+      [totalInput, studyInput, breakInput].forEach(function (el) {
+        el.addEventListener("input", clearValidation);
+      });
+    })();
+  </script>
+</body>
+</html>
